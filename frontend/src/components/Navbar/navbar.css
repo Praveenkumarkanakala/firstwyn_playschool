@@ -88,14 +88,19 @@
 .is-scrolled .lk-nav__logo img { height: calc(var(--logo-h) - var(--shrink)); }
 .lk-nav__logo:hover img { transform: scale(1.04); }
 
-/* ---------- links ---------- */
+/* ---------- links ----------
+   flex: 1 + space-evenly makes the links fill all the free space
+   between the logo and the Enquire Now button, at any screen width. */
 .lk-nav__links {
   list-style: none;
   margin: 0;
   padding: 0;
+  flex: 1;
+  min-width: 0;
   display: flex;
   align-items: center;
-  gap: 28px;
+  justify-content: center;
+  gap: 36px;   /* <-- space between links: change this number to taste */
 }
 
 .lk-nav__item { position: relative; }
@@ -109,7 +114,7 @@
   background: none;
   border: 0;
   cursor: pointer;
-  font: 500 19px/1 var(--lk-font);
+  font: 500 20px/1 var(--lk-font);
   color: var(--lk-navy);
   text-decoration: none;
   white-space: nowrap;
@@ -218,7 +223,7 @@
 .lk-btn svg { flex: none; transition: transform 0.25s; }
 .lk-btn:hover svg { transform: translateX(5px); }
 
-.lk-nav__cta { animation: lk-fade-down 0.5s 0.6s backwards; }
+.lk-nav__cta { flex-shrink: 0; animation: lk-fade-down 0.5s 0.6s backwards; }
 .lk-nav__cta-mobile { display: none; }
 .lk-nav__backdrop { display: none; }
 
@@ -269,26 +274,27 @@
 @media (max-width: 1500px) {
   .lk-nav-wrap { --nav-h: 96px; --logo-h: 120px; --logo-ml: -22px; }
   .lk-nav { padding: 0 36px; }
-  .lk-nav__links { gap: 20px; }
-  .lk-nav__link { font-size: 16px; }
-  .lk-btn { height: 52px; font-size: 16px; padding: 0 22px; }
+  .lk-nav__link { font-size: 18px; }
+  .lk-btn { height: 52px; font-size: 17px; padding: 0 24px; }
 }
 
 @media (max-width: 1400px) {
   .lk-nav-wrap { --nav-h: 92px; --logo-h: 108px; --logo-ml: -18px; padding: 0 20px; }
   .lk-nav { padding: 0 24px; gap: 16px; }
-  .lk-nav__links { gap: 14px; }
-  .lk-nav__link { font-size: 15px; }
-  .lk-btn { height: 48px; font-size: 15px; padding: 0 18px; gap: 10px; }
+  .lk-nav__link { font-size: 17px; }
+  .lk-btn { height: 48px; font-size: 16px; padding: 0 20px; gap: 10px; }
   .lk-btn svg { width: 18px; height: 18px; }
 }
 
+@media (max-width: 1400px) {
+  .lk-nav__links { gap: 28px; }
+}
 @media (max-width: 1200px) {
+  .lk-nav__links { gap: 20px; }
   .lk-nav-wrap { --logo-h: 100px; --logo-ml: -14px; padding: 0 14px; }
   .lk-nav { padding: 0 18px; gap: 12px; }
-  .lk-nav__links { gap: 12px; }
-  .lk-nav__link { font-size: 14.5px; }
-  .lk-btn { height: 46px; font-size: 14.5px; padding: 0 16px; }
+  .lk-nav__link { font-size: 16px; }
+  .lk-btn { height: 46px; font-size: 15px; padding: 0 18px; }
 }
 
 /* ---------- tablet + mobile (<= 1100px): burger menu ---------- */
@@ -317,8 +323,10 @@
     top: calc(100% + 10px);
     left: 0;
     right: 0;
+    flex: none;
     flex-direction: column;
     align-items: stretch;
+    justify-content: flex-start;
     gap: 0;
     padding: 12px 20px 20px;
     background: #fff;

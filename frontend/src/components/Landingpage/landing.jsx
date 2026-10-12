@@ -1,8 +1,10 @@
+import { useRef, useState } from "react";
 import "./landing.css";
 import Navbar, { ArrowIcon } from "../Navbar/navbar";
 
 
 import heroKids from "./image.png";
+import heroVideo from "./firstwyn video.mp4"; 
 import aboutCenter from "../Images/about-center.jpg";
 
 import jnyPlaygroup from "../Images/jny-playgroup.jpg";
@@ -42,8 +44,7 @@ function ShieldCheckIcon() {
   );
 }
 
-/* One shared stats list, used by the hero and the About section
-   (it used to be repeated three times: hero, about, journey). */
+
 const siteStats = [
   { Icon: TeamIcon, color: "#f2a81d", num: "1000+", label: "Happy Children" },
   { Icon: CapIcon, color: "#14295f", num: "10+", label: "Years of Excellence" },
@@ -327,104 +328,180 @@ const facilities = [
   { tone: "sky", color: "#ee4f7a", Icon: CarIcon, label: "Safe Pick-up & Drop-off" },
 ];
 
+/* ---------- Hero video player ---------- */
+const vi = { fill: "none", stroke: "currentColor", strokeWidth: 2, strokeLinecap: "round", strokeLinejoin: "round" };
+const PlayGlyph = () => (<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7 4.5v15l13-7.5z" fill="currentColor" /></svg>);
+const PauseGlyph = () => (<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7 4h3.5v16H7zM13.500 4H17v16h-3.500z" fill="currentColor" /></svg>);
+const VolGlyph = () => (<svg viewBox="0 0 24 24" aria-hidden="true" {...vi}><path d="M4 9.500v5h4l5 4v-13l-5 4z" fill="currentColor" /><path d="M16.500 8.500a5 5 0 0 1 0 7M19 6a8.500 8.500 0 0 1 0 12" /></svg>);
+const MuteGlyph = () => (<svg viewBox="0 0 24 24" aria-hidden="true" {...vi}><path d="M4 9.500v5h4l5 4v-13l-5 4z" fill="currentColor" /><path d="M17 9.500l5 5M22 9.500l-5 5" /></svg>);
+const GearGlyph = () => (<svg viewBox="0 0 24 24" aria-hidden="true" {...vi}><circle cx="12" cy="12" r="3" /><path d="M12 2.500l1.600 2.300 2.700-.6.900 2.600 2.600.9-.6 2.700 2.300 1.600-2.300 1.600.6 2.700-2.600.9-.9 2.600-2.700-.6L12 21.500l-1.600-2.300-2.700.6-.9-2.600-2.600-.9.600-2.700L2.500 12l2.300-1.600-.6-2.700 2.600-.9.900-2.600 2.700.6z" /></svg>);
+const FullGlyph = () => (<svg viewBox="0 0 24 24" aria-hidden="true" {...vi}><path d="M4 9V4h5M15 4h5v5M20 15v5h-5M9 20H4v-5" /></svg>);
+
+const fmt = (t) => {
+  if (!isFinite(t)) return "0:00";
+  return `${Math.floor(t / 60)}:${String(Math.floor(t % 60)).padStart(2, "0")}`;
+};
+const SPEEDS = [1, 1.5, 2, 0.5];
+
+function HeroVideo({ src, poster }) {
+  const wrap = useRef(null);
+  const vid = useRef(null);
+  const [playing, setPlaying] = useState(false);
+  const [muted, setMuted] = useState(false);
+  const [time, setTime] = useState(0);
+  const [dur, setDur] = useState(0);
+  const [speed, setSpeed] = useState(0);
+
+  const toggle = () => {
+    const v = vid.current;
+    if (!v) return;
+    if (v.paused) v.play(); else v.pause();
+  };
+  const seek = (e) => {
+    vid.current.currentTime = Number(e.target.value);
+    setTime(vid.current.currentTime);
+  };
+  const toggleMute = () => {
+    vid.current.muted = !vid.current.muted;
+    setMuted(vid.current.muted);
+  };
+  const cycleSpeed = () => {
+    const n = (speed + 1) % SPEEDS.length;
+    vid.current.playbackRate = SPEEDS[n];
+    setSpeed(n);
+  };
+  const fullscreen = () => {
+    if (document.fullscreenElement) document.exitFullscreen();
+    else wrap.current?.requestFullscreen?.();
+  };
+
+  return (
+    <div className={`lk-hv${playing ? " is-playing" : ""}`}>
+      <div className="lk-hv__frame" ref={wrap}>
+        <video
+          ref={vid}
+          className="lk-hv__video"
+          src={src}
+          poster={poster}
+          playsInline
+          preload="metadata"
+          onClick={toggle}
+          onPlay={() => setPlaying(true)}
+          onPause={() => setPlaying(false)}
+          onEnded={() => setPlaying(false)}
+          onTimeUpdate={(e) => setTime(e.currentTarget.currentTime)}
+          onLoadedMetadata={(e) => setDur(e.currentTarget.duration)}
+        />
+
+        <button type="button" className="lk-hv__big" onClick={toggle} aria-label="Play video">
+          <PlayGlyph />
+        </button>
+
+        <div className="lk-hv__bar">
+          <button type="button" className="lk-hv__ctl" onClick={toggle} aria-label={playing ? "Pause" : "Play"}>
+            {playing ? <PauseGlyph /> : <PlayGlyph />}
+          </button>
+          <span className="lk-hv__time">{fmt(time)} / {fmt(dur)}</span>
+          <input
+            className="lk-hv__range"
+            type="range" min="0" max={dur || 0} step="0.1" value={time}
+            onChange={seek} aria-label="Seek"
+            style={{ "--p": `${dur ? (time / dur) * 100 : 0}%` }}
+          />
+          <button type="button" className="lk-hv__ctl" onClick={toggleMute} aria-label="Mute">
+            {muted ? <MuteGlyph /> : <VolGlyph />}
+          </button>
+          <button type="button" className="lk-hv__ctl" onClick={cycleSpeed} aria-label="Playback speed" title={`Speed ${SPEEDS[speed]}x`}>
+            <GearGlyph />
+          </button>
+          <button type="button" className="lk-hv__ctl" onClick={fullscreen} aria-label="Fullscreen">
+            <FullGlyph />
+          </button>
+        </div>
+      </div>
+
+      <button type="button" className="lk-hv__pill" onClick={toggle}>
+        <span className="lk-hv__pill-dot"><PlayGlyph /></span>
+        Discover the First WYN Experience
+      </button>
+    </div>
+  );
+}
+
 export default function Landing() {
   return (
     <div className="lk-page">
       <Navbar />
 
-      {/* ====================== SECTION 1 : HERO ====================== */}
+      {/* ====================== SECTION 1 : HERO (text left, video right) ====================== */}
       <section className="lk-hx" id="home">
-        {/* photo, fades into the text side (above the fold, so not lazy) */}
-        <div className="lk-hx__photo">
-          <img
-            src={heroKids}
-            alt="Smiling First WYN students in school uniform holding books"
-            width="1200"
-            height="900"
-            decoding="async"
-          />
-        </div>
-
         {/* decorations */}
-        <svg className="lk-hx__leaf lk-hx__leaf--tl" viewBox="0 0 80 100" aria-hidden="true">
-          <path fill="#b9dc94" d="M0 6C26-2 58 8 72 32C60 34 52 38 46 46C62 50 76 60 80 78C58 72 44 66 32 68C34 82 20 96 0 100Z" />
-        </svg>
+        <span className="lk-hx__blob lk-hx__blob--tr" aria-hidden="true" />
+        <span className="lk-hx__blob lk-hx__blob--br" aria-hidden="true" />
+        <span className="lk-hx__blob lk-hx__blob--bl" aria-hidden="true" />
+        <span className="lk-hx__blob lk-hx__blob--tl" aria-hidden="true" />
         <svg className="lk-hx__leaf lk-hx__leaf--bl" viewBox="0 0 90 110" aria-hidden="true">
           <path fill="#2f9e48" d="M0 40C8 14 34 2 66 8C66 40 40 68 4 82Z" />
           <path fill="#7cc243" d="M10 110C8 78 26 52 56 46C62 76 44 102 10 110Z" />
         </svg>
-        <svg className="lk-hx__leaf lk-hx__leaf--br" viewBox="0 0 90 110" aria-hidden="true">
-          <path fill="#2f9e48" d="M90 30C70 10 40 12 20 30C34 52 62 56 90 46Z" />
-          <path fill="#7cc243" d="M90 110C90 78 70 54 40 52C34 82 56 106 90 110Z" />
-        </svg>
-        <svg className="lk-hx__plane" viewBox="0 0 160 110" aria-hidden="true">
-          <path d="M4 100C30 112 80 100 108 68" fill="none" stroke="#14295f" strokeWidth="1.8" strokeDasharray="3 6" strokeLinecap="round" />
-          <path d="M96 40L152 6 124 70 112 50Z" fill="#fff" stroke="#14295f" strokeWidth="2" strokeLinejoin="round" />
-          <path d="M152 6L112 50" stroke="#14295f" strokeWidth="2" />
+        <svg className="lk-hx__leaf lk-hx__leaf--chip" viewBox="0 0 60 40" aria-hidden="true">
+          <path fill="#f7c531" d="M2 30C6 10 30 2 56 8C52 28 28 40 2 30Z" />
         </svg>
 
-        {/* content */}
-        <div className="lk-hx__content">
-          <span className="lk-hx__badge">
-            <svg viewBox="0 0 24 24" aria-hidden="true"><path fill="#1c9a4a" d="M12 21.5C5.5 17 2.5 13.5 2.5 9.6 2.5 6.8 4.7 4.8 7.2 4.8c1.9 0 3.6 1 4.8 2.9 1.2-1.9 2.9-2.9 4.8-2.9 2.5 0 4.7 2 4.7 4.8 0 3.9-3 7.4-9.5 11.9z" /></svg>
-            First WYN Global Play School
-          </span>
+        <div className="lk-hx__inner">
+          {/* left : content */}
+          <div className="lk-hx__content">
+            <span className="lk-hx__badge">
+              <SproutIcon /> First WYN Global Play School
+            </span>
 
-          <h1 className="lk-hx__title">
-            A Joyful Beginning
-            <svg className="lk-hx__sun" viewBox="0 0 64 64" aria-hidden="true">
-              <circle cx="32" cy="32" r="10" fill="#fbd24a" stroke="#f2a81d" strokeWidth="3" />
-              <g stroke="#f2a81d" strokeWidth="3" strokeLinecap="round">
-                {[...Array(8)].map((_, i) => (
-                  <line key={i} x1="32" y1="6" x2="32" y2="14" transform={`rotate(${i * 45} 32 32)`} />
-                ))}
-              </g>
-            </svg>
-            {" "}<br />
-            to <span>Lifelong Learning</span>
-          </h1>
+            <h1 className="lk-hx__title">
+              A Joyful Beginning
+              <svg className="lk-hx__sun" viewBox="0 0 64 64" aria-hidden="true">
+                <g stroke="#f5b81c" strokeWidth="2.6" strokeLinecap="round" fill="none">
+                  {[...Array(8)].map((_, i) => (
+                    <line key={i} x1="32" y1="4" x2="32" y2="13" transform={`rotate(${i * 45} 32 32)`} />
+                  ))}
+                  <circle cx="32" cy="32" r="9" />
+                </g>
+              </svg>
+              {" "}<br />
+              to <span>Lifelong Learning</span>
+              <svg className="lk-hx__under" viewBox="0 0 200 12" preserveAspectRatio="none" aria-hidden="true">
+                <path d="M2 9C50 4 130 2 198 5" fill="none" stroke="#f5b81c" strokeWidth="3.5" strokeLinecap="round" />
+              </svg>
+            </h1>
 
-          <p className="lk-hx__text">
-            At First WYN Global Play School, we provide a nurturing and inspiring
-            environment where children learn through play,{" "}
-            <b>explore</b> their <b>potential</b> and grow into confident, kind and
-            future-ready individuals.
-          </p>
+            <p className="lk-hx__text">
+              At First WYN Global Play School, we provide a nurturing and inspiring
+              environment where children learn through <b>play</b>, <b>explore</b> their{" "}
+              <b>potential</b> and grow into confident, kind and future-ready individuals.
+            </p>
 
-          <div className="lk-hx__actions">
-            <a href="#programs" className="lk-hx__btn lk-hx__btn--solid">
-              Explore Our Programs <ArrowIcon />
-            </a>
-            <a href="#enquire" className="lk-hx__btn lk-hx__btn--ghost">
-              <svg viewBox="0 0 24 24" aria-hidden="true" {...sw}><rect x="3.5" y="5" width="17" height="15" rx="2" /><path d="M3.5 10h17M8 3v4M16 3v4" /></svg>
-              Admission Enquiry <ArrowIcon />
-            </a>
+            <div className="lk-hx__actions">
+              <a href="#programs" className="lk-hx__btn lk-hx__btn--solid">
+                Explore Our Programs <ArrowIcon />
+              </a>
+              <a href="#enquire" className="lk-hx__btn lk-hx__btn--ghost">
+                <svg viewBox="0 0 24 24" aria-hidden="true" {...sw}><rect x="3.5" y="5" width="17" height="15" rx="2" /><path d="M3.5 10h17M8 3v4M16 3v4" /></svg>
+                Admission Enquiry <ArrowIcon />
+              </a>
+            </div>
+
+            <ul className="lk-hx__stats">
+              {siteStats.map(({ Icon, color, num, label }) => (
+                <li key={label}>
+                  <span className="lk-hx__stat-ic" style={{ color }}><Icon /></span>
+                  <strong>{num}</strong>
+                  <small>{label}</small>
+                </li>
+              ))}
+            </ul>
           </div>
 
-          <ul className="lk-hx__stats">
-            {siteStats.map(({ Icon, color, num, label }) => (
-              <li key={label}>
-                <span className="lk-hx__stat-ic" style={{ color }}><Icon /></span>
-                <strong>{num}</strong>
-                <small>{label}</small>
-              </li>
-            ))}
-          </ul>
+          {/* right : video (set its path in the heroVideo import at the top of this file) */}
+          <HeroVideo src={heroVideo} poster={heroKids} />
         </div>
-
-        {/* navy wave with yellow/green stripe */}
-        <svg className="lk-hx__wave" viewBox="0 0 1440 150" preserveAspectRatio="none" aria-hidden="true">
-          <defs>
-            <linearGradient id="lkHxStripe" x1="0" x2="1" y1="0" y2="0">
-              <stop offset="0" stopColor="#f7c531" />
-              <stop offset="0.45" stopColor="#f7c531" />
-              <stop offset="0.75" stopColor="#7cc243" />
-              <stop offset="1" stopColor="#2f9e48" />
-            </linearGradient>
-          </defs>
-          <path d="M0 62C260 40 560 92 880 122C1120 144 1320 100 1440 66" fill="none" stroke="url(#lkHxStripe)" strokeWidth="7" />
-          <path d="M0 76C260 54 560 106 880 136C1120 158 1320 114 1440 80L1440 150L0 150Z" fill="#0b2a63" />
-        </svg>
       </section>
 
       {/* ====================== SECTION 2 : ABOUT ====================== */}

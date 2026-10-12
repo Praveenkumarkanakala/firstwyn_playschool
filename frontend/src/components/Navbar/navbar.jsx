@@ -16,11 +16,9 @@ const links = [
     ],
   },
   { label: "Programs", href: "#programs", ids: ["programs", "experience", "facilities"] },
-  { label: "Centres", href: "#centres", ids: ["centres"] },
   { label: "Admissions", href: "#admissions", ids: ["admissions"] },
   { label: "Gallery", href: "#gallery", ids: ["gallery"] },
   { label: "Blog", href: "#blog", ids: ["blog"] },
-  { label: "Franchise", href: "#franchise", ids: ["franchise"] },
   { label: "Contact", href: "#contact", ids: ["contact"] },
 ];
 
